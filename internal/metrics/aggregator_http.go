@@ -6,30 +6,18 @@ import (
 	"time"
 )
 
-// SummaryHandler returns an http.Handler that serves aggregated job
-// statistics for a configurable look-back window.
-//
-// Query parameters:
-//
-//	window — duration string (default: "1h")
-func SummaryHandler(agg *Aggregator) http.Handler {
+// SummaryHandler returns an HTTP handler that serves aggregated job summaries
+// for the given time window using the provided Aggregator.
+func SummaryHandler(agg *Aggregator, window time.Duration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		windowStr := r.URL.Query().Get("window")
-		if windowStr == "" {
-			windowStr = "1h"
+		summaries := agg.Summarize(window)
+		if summaries == nil {
+			summaries = []JobSummary{}
 		}
-		window, err := time.ParseDuration(windowStr)
-		if err != nil {
-			http.Error(w, "invalid window duration", http.StatusBadRequest)
-			return
-		}
-
-		now := time.Now()
-		summaries := agg.Summarize(now.Add(-window), now)
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(summaries); err != nil {
-			http.Error(w, "encoding error", http.StatusInternalServerError)
+			http.Error(w, "failed to encode summaries", http.StatusInternalServerError)
 		}
 	})
 }
