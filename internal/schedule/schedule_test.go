@@ -69,3 +69,12 @@ func TestIsDue_False(t *testing.T) {
 		t.Error("expected job not to be due, got true")
 	}
 }
+
+func TestIsDue_InvalidExpr(t *testing.T) {
+	start := mustTime("2024-01-01 13:00")
+	end := mustTime("2024-01-01 13:30")
+	_, err := schedule.IsDue("not-a-cron", start, end)
+	if err == nil {
+		t.Error("expected error for invalid expression, got nil")
+	}
+}
