@@ -22,6 +22,11 @@ type JobHealth struct {
 	Message    string       `json:"message,omitempty"`
 }
 
+// IsHealthy reports whether the job is in a fully healthy state.
+func (j JobHealth) IsHealthy() bool {
+	return j.Status == HealthOK
+}
+
 // HealthEvaluator derives a HealthStatus from a job's current metrics.
 type HealthEvaluator struct {
 	MissedThreshold int
@@ -69,4 +74,14 @@ func (e *HealthEvaluator) Evaluate(snap Snapshot, now time.Time) JobHealth {
 	}
 
 	return h
+}
+
+// EvaluateAll evaluates health for a slice of snapshots and returns the
+// corresponding JobHealth entries in the same order.
+func (e *HealthEvaluator) EvaluateAll(snaps []Snapshot, now time.Time) []JobHealth {
+	results := make([]JobHealth, len(snaps))
+	for i, snap := range snaps {
+		results[i] = e.Evaluate(snap, now)
+	}
+	return results
 }
