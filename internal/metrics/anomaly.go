@@ -85,6 +85,19 @@ func (a *AnomalyDetector) Detect(now time.Time) []AnomalyReport {
 	return reports
 }
 
+// DetectForJob returns anomaly reports for a single job within the configured window.
+// It is a convenience wrapper around Detect for callers that only care about one job.
+func (a *AnomalyDetector) DetectForJob(job string, now time.Time) []AnomalyReport {
+	all := a.Detect(now)
+	var reports []AnomalyReport
+	for _, r := range all {
+		if r.Job == job {
+			reports = append(reports, r)
+		}
+	}
+	return reports
+}
+
 // historicalMedian returns the average p50 across all snapshots older than the window.
 func (a *AnomalyDetector) historicalMedian(job string, now time.Time) float64 {
 	snaps := a.collector.All()[job]
